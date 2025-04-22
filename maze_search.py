@@ -42,3 +42,51 @@ class Maze:
             if 0 <= new_row < self.grid.shape[0] and 0 <= new_column < self.grid.shape[1] and self.grid[new_row][new_column] == 0:
                 if(self.grid[new_row][new_column] == 0):
                     yield (new_row, new_column)
+                    
+                    
+class SearchAgent:
+    def initialize_Agent(self, maze, start, goal):
+        self.maze = maze
+        
+    def bfs(self):
+        start = self.maze.start
+        goal = self.maze.goal
+        nodes = deque([start])
+        came_from = {start: None}
+        visited = {start}
+        while nodes:
+            current = nodes.popleft()
+            if current == goal:
+                break
+            for neighbor in self.maze.neighbors(current):
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    came_from[neighbor] = current
+                    nodes.append(neighbor)
+                yield visited, came_from
+            yield visited, came_from
+            
+    def a_star():
+        start = self.maze.start
+        goal = self.maze.goal
+        def heuristic(position):
+            return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
+        open_set = []
+        heapq.heappush(open_set, (heuristic(start), start))
+        came_from = {start: None}
+        g_score = {start: 0}
+        visited = set()
+        while open_set:
+            i, current = heapq.heappop(open_set)
+            if current == goal:
+                break
+            visited.add(current)
+            for neighbor in self.maze.neighbors(current):
+                if neighbor not in visited:
+                    tentative_g_score = g_score[current] + 1
+                    if tentative_g_score < g_score.get(neighbor, float('inf')):
+                        came_from[neighbor] = current
+                        g_score[neighbor] = tentative_g_score
+                        heapq.heappush(open_set, (tentative_g_score + heuristic(neighbor), neighbor))
+                yield visited, came_from
+            yield visited, came_from
