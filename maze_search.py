@@ -3,6 +3,7 @@ import numpy as np
 import random
 from collections import deque
 import heapq
+import time
 
 class Maze:
     def initialize_Maze(self, width, height, seed = None):
@@ -90,3 +91,51 @@ class SearchAgent:
                         heapq.heappush(open_set, (tentative_g_score + heuristic(neighbor), neighbor))
                 yield visited, came_from
             yield visited, came_from
+            
+def animate_search(maze, search_gen, pause = 0.005):
+    height = maze.grid.shape[0]
+    width = maze.grid.shape[1]
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_xticks([])
+    ax.set_yticks([])
+    image = np.zeros((height, width, 3), dtype=float)
+    image[maze.grid == 1] = [0, 0, 0]  # walls
+    image[maze.grid == 0] = [1, 1, 1]  # paths
+    im = ax.imshow(image, interpolation='nearest')
+    
+    start_row, start_column = maze.start
+    goal_row, goal_column = maze.goal
+    ax.text(start_column, start_row, 'S', color='red', weight='bold',
+            fontsize=14, ha='center', va='center')
+    ax.text(goal_column, goal_row, 'G', color='red', weight='bold',
+            fontsize=14, ha='center', va='center')
+    
+    for visited, came_from in search_gen:
+        disp = image.copy()
+        for (r,c) in visited:
+            disp[r][c] = [0.6, 0.8, 1]
+        im.set_data(disp)
+        plt.pause(pause)
+        
+    path = []
+    node = maze.goal
+    while node is not None:
+        path.append(node)
+        node = came_from.get(node)
+    for (row,column) in path:
+        image[row][column] = [1, 0.6, 0.6]
+    image[maze.start] = [0, 1, 0]
+    image[maze.goal] = [1, 0, 0]
+    
+    plt.title(f'Path Found with Length: {len(path)}')
+    plt.show()
+    
+if __name__ == "__main__":
+    MAZE_WIDTH = 20
+    MAZE_HEIGHT = 20
+    maze = Maze()
+    maze.initialize_Maze(MAZE_WIDTH, MAZE_HEIGHT, seed = random.randint(0, 100))
+    search_agent = SearchAgent()
+    search_agent.initialize_Agent(maze, maze.start, maze.goal)
+    print("Starting BFS Search")
+    animate_search(maze, search_agent.bfs(), pause = 0.005)
