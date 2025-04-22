@@ -46,7 +46,7 @@ class Maze:
                     
                     
 class SearchAgent:
-    def initialize_Agent(self, maze, start, goal):
+    def initialize_Agent(self, maze, goal, start):
         self.maze = maze
         
     def bfs(self):
@@ -67,7 +67,7 @@ class SearchAgent:
                 yield visited, came_from
             yield visited, came_from
             
-    def a_star():
+    def a_star(self):
         start = self.maze.start
         goal = self.maze.goal
         def heuristic(position):
@@ -135,7 +135,12 @@ if __name__ == "__main__":
     MAZE_HEIGHT = 20
     maze = Maze()
     maze.initialize_Maze(MAZE_WIDTH, MAZE_HEIGHT, seed = random.randint(0, 100))
+    
     search_agent = SearchAgent()
     search_agent.initialize_Agent(maze, maze.start, maze.goal)
+    
     print("Starting BFS Search")
     animate_search(maze, search_agent.bfs(), pause = 0.005)
+    
+    print("Starting A* Search")
+    animate_search(maze, search_agent.a_star(), pause = 0.005)
