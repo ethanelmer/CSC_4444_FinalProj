@@ -6,43 +6,72 @@ import heapq
 import time
 
 class Maze:
-    def initialize_Maze(self, width, height, seed = None):
-        self.width = width
-        self.height = height
+    def initialize_Maze(self, dimensions : list, seed = None):
+        self.dimensions = dimensions
+        self.ndim = len(dimensions)
+
         if seed is not None:
             random.seed(seed)
-        self.grid = np.ones((2*height+1, 2*width+1), dtype=int)
+
+        shape = tuple(2*dim + 1 for dim in dimensions)
+        self.grid = np.ones(shape, dtype=int)
+
         self.generate_maze()
         
     def generate_maze(self):
-        Height, Width = self.height, self.width
-        visited = [[False]*Width for i in range(Height)]
-        def carve (row, column):
-            visited[row][column] = True
-            self.grid[2*row+1][2*column+1] = 0
-            directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+        # initialize the visited nodes to false
+        visited = np.zeros(self.dimensions, dtype=bool)
+
+        def carve (position):
+            visited[tuple(position)] = True
+
+            grid_pos = tuple(2*pos + 1 for pos in position)
+            self.grid[grid_pos] = 0
+
+            # Create list of possible directions in n dimensions
+            directions = []
+            for dim in range(self.ndim):
+                # For each dimension, can go +1 or -1
+                for step in [-1, 1]:
+                    direction = [0] * self.ndim
+                    direction[dim] = step
+                    directions.append(direction)
+
             random.shuffle(directions)
-            for direction_row, direction_column in directions:
-                new_row = row + direction_row
-                new_column = column + direction_column
-                if 0 <= new_row < Height and 0 <= new_column < Width and not visited[new_row][new_column]:
-                    self.grid[2*row+1 + direction_row][2*column+1 + direction_column] = 0
-                    carve(new_row, new_column)
-        carve(0, 0)
-        self.start = (1, 1)
-        self.goal = (2*Height-1, 2*Width-1)
+
+            # Try each direction
+            for direction in directions:
+                new_pos = [position[i] + direction[i] for i in range(self.ndim)]
+                
+                # Check if new position is valid
+                if all(0 <= new_pos[i] < self.dimensions[i] for i in range(self.ndim)) and not visited[tuple(new_pos)]:
+                    # Carve passage between cells
+                    wall_pos = tuple(2*position[i] + 1 + direction[i] for i in range(self.ndim))
+                    self.grid[wall_pos] = 0
+                    
+                    # Recursively carve from new position
+                    carve(new_pos)
+
+        # Start carving from origin
+        start_pos = [0] * self.ndim
+        carve(start_pos)
+
+        self.start = tuple(1 for _ in range(self.ndim))
+        self.goal = tuple(2*dim - 1 for dim in self.dimensions)
         self.grid[self.start] = 0
         self.grid[self.goal] = 0
         
     def neighbors(self,pos):
-        row, column = pos
-        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        for direction_row, direction_column in directions:
-            new_row = row + direction_row
-            new_column = column + direction_column
-            if 0 <= new_row < self.grid.shape[0] and 0 <= new_column < self.grid.shape[1] and self.grid[new_row][new_column] == 0:
-                if(self.grid[new_row][new_column] == 0):
-                    yield (new_row, new_column)
+        for dim in range(self.ndim):
+            for step in [-1, 1]:
+                new_pos = list(pos)
+                new_pos[dim] += step
+                new_pos = tuple(new_pos)
+                
+                # Check if valid position and is a path
+                if all(0 <= new_pos[i] < self.grid.shape[i] for i in range(self.ndim)) and self.grid[new_pos] == 0:
+                    yield new_pos
                     
                     
 class SearchAgent:
@@ -71,7 +100,7 @@ class SearchAgent:
         start = self.maze.start
         goal = self.maze.goal
         def heuristic(position):
-            return abs(position[0] - goal[0]) + abs(position[1] - goal[1])
+            return sum(abs(position[i] - goal[i]) for i in range(self.maze.ndim))
         open_set = []
         heapq.heappush(open_set, (heuristic(start), start))
         came_from = {start: None}
@@ -134,7 +163,7 @@ if __name__ == "__main__":
     MAZE_WIDTH = 20
     MAZE_HEIGHT = 20
     maze = Maze()
-    maze.initialize_Maze(MAZE_WIDTH, MAZE_HEIGHT, seed = random.randint(0, 100))
+    maze.initialize_Maze([MAZE_WIDTH, MAZE_HEIGHT], seed = random.randint(0, 100))
     
     search_agent = SearchAgent()
     search_agent.initialize_Agent(maze, maze.start, maze.goal)
