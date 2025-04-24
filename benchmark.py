@@ -1,11 +1,39 @@
-import numpy as np
-import pandas as pd
 import random
 import time
 import csv
 import sys
+import matplotlib.pyplot as plt
+import pandas as pd
 from maze_search import Maze, SearchAgent
 
+def plot_results(csv_path, size):
+    df = pd.read_csv(csv_path)
+    metrics = ["runtime", "nodes", "length"]
+    titles = ["Runtime (ms)", "Nodes expanded", "Path length"]
+    colors = {"A*": "tab:blue", "BFS": "tab:red"}
+
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 9),
+                             sharex=True, constrained_layout=True)
+
+    for ax, metric, title in zip(axes, metrics, titles):
+        for algorithm, sub in df.groupby("algorithm"):
+            ax.plot(sub["iteration"],
+                    sub[metric],
+                    marker="o", markersize=4,
+                    linestyle="-",
+                    label=algorithm,
+                    color=colors[algorithm])
+        ax.set_ylabel(title)
+        ax.grid(axis="y", ls="--", alpha=.4)
+
+    axes[-1].set_xlabel("Iteration")
+    axes[0].legend(loc="upper left")
+    fig.suptitle("Per-iteration performance"
+                 + (f" | size {size}" if size else ""),
+                 fontsize=14)
+    fig.savefig("per_iter_dashboard.png", dpi=150)
+    print(f"Figure saved → per_iter_dashboard.png")
+    plt.show()
 def measure_path_length(came_from, goal):
 
     length = 0
@@ -85,6 +113,10 @@ def main():
             sys.exit(1)
 
     benchmark_agent = SearchAgent()
+    plot_result = input("Would you like to plot the results? (y/n): ").strip().lower()
+    if plot_result is not None and plot_result != 'y' and plot_result != 'n':
+        print("Invalid input. Please enter 'y' or 'n'.")
+        sys.exit(1)
     with open('benchmark_results.csv', mode='a', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["algorithm", "iteration", "dimensions", "size", "runtime", "nodes", "length"])
@@ -100,14 +132,16 @@ def main():
             benchmark_agent.initialize_Agent(benchmark_maze, benchmark_maze.start, benchmark_maze.goal)
             for algorithm in ['A*', 'BFS']:
                 print(f"Running iteration {rep + 1} of {iterations} for {dimensions}D maze with size {size_label} using {algorithm} algorithm.")
-                # Run the benchmark for A* and BFS
-                runtime, nodes, length = run_benchmark(algorithm, benchmark_maze, benchmark_agent,benchmark_maze.start, benchmark_maze.goal)
+
+                runtime, nodes, length = run_benchmark(algorithm, benchmark_agent, benchmark_maze.goal)
                 print(f"Algorithm: {algorithm}, Dimensions: {dimensions}, Size: {size_label}, "
                         f"Runtime: {runtime:.2f} ms, Nodes Visited: {nodes}, Path Length: {length}")
 
 
                 writer.writerow([algorithm, rep+1, dimensions, size_label, runtime, nodes, length])
                 print(f"Results saved to benchmark_results.csv")
+    if plot_result == 'y':
+        plot_results('benchmark_results.csv', size_label)
 
 if __name__ == "__main__":
     main()
