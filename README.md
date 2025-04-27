@@ -19,9 +19,9 @@ This project implements a maze generation and solving algorithm that works in n-
 The project requires the following Python packages:
 
 ```python
-matplotlib>=3.7.0
-numpy>=1.24.0
-pandas>=2.0.0
+matplotlib>=3.10.1
+numpy>=2.2.5
+pandas>=2.2.3
 ```
 
 ## Installation
