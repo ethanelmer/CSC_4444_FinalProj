@@ -77,7 +77,7 @@ class SearchAgent:
         self.maze = maze
         
     def bfs(self):
-        #Initialize BFS
+        # Initialize BFS
         start = self.maze.start
         goal = self.maze.goal
         nodes = deque([start])
@@ -87,25 +87,26 @@ class SearchAgent:
             # Pop the first node from the queue
             current = nodes.popleft()
             if current == goal:
-                break # Found the goal
+                # Yield one final update before finishing
+                yield visited, came_from
+                break  # Found the goal
             for neighbor in self.maze.neighbors(current):
                 if neighbor not in visited:
-                    # Add neighbor to visited set and queue
                     visited.add(neighbor)
                     came_from[neighbor] = current
                     nodes.append(neighbor)
-                yield visited, came_from
+            # Yield update once per main loop iteration
             yield visited, came_from
             
     def a_star(self):
-        #Initialize A*
+        # Initialize A*
         start = self.maze.start
         goal = self.maze.goal
-        
+
         # Heuristic function (Manhattan distance)
         def heuristic(position):
             return sum(abs(position[i] - goal[i]) for i in range(self.maze.ndim))
-        
+
         open_set = []
         heapq.heappush(open_set, (heuristic(start), start))
         came_from = {start: None}
@@ -114,6 +115,7 @@ class SearchAgent:
         while open_set:
             i, current = heapq.heappop(open_set)
             if current == goal:
+                yield visited, came_from  # Final update before finishing
                 break
             visited.add(current)
             for neighbor in self.maze.neighbors(current):
@@ -124,7 +126,7 @@ class SearchAgent:
                         came_from[neighbor] = current
                         g_score[neighbor] = tentative_g_score
                         heapq.heappush(open_set, (tentative_g_score + heuristic(neighbor), neighbor))
-                yield visited, came_from
+            # Yield update once per main loop iteration
             yield visited, came_from
             
 def animate_search_3d(maze, search_gen, pause=0.02):
