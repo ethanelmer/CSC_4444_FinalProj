@@ -8,10 +8,12 @@ import time
 
 class Maze:
     def initialize_Maze(self, dimensions : list, seed = None):
+        #Set dimensions
         self.dimensions = dimensions
         self.ndim = len(dimensions)
 
-        if seed is not None:
+        #Double check and set seed if not
+        if seed is not None: 
             random.seed(seed)
 
         shape = tuple(2*dim + 1 for dim in dimensions)
@@ -75,17 +77,20 @@ class SearchAgent:
         self.maze = maze
         
     def bfs(self):
+        #Initialize BFS
         start = self.maze.start
         goal = self.maze.goal
         nodes = deque([start])
         came_from = {start: None}
         visited = {start}
         while nodes:
+            # Pop the first node from the queue
             current = nodes.popleft()
             if current == goal:
-                break
+                break # Found the goal
             for neighbor in self.maze.neighbors(current):
                 if neighbor not in visited:
+                    # Add neighbor to visited set and queue
                     visited.add(neighbor)
                     came_from[neighbor] = current
                     nodes.append(neighbor)
@@ -93,10 +98,14 @@ class SearchAgent:
             yield visited, came_from
             
     def a_star(self):
+        #Initialize A*
         start = self.maze.start
         goal = self.maze.goal
+        
+        # Heuristic function (Manhattan distance)
         def heuristic(position):
             return sum(abs(position[i] - goal[i]) for i in range(self.maze.ndim))
+        
         open_set = []
         heapq.heappush(open_set, (heuristic(start), start))
         came_from = {start: None}
@@ -109,6 +118,7 @@ class SearchAgent:
             visited.add(current)
             for neighbor in self.maze.neighbors(current):
                 if neighbor not in visited:
+                    # Calculate tentative g_score
                     tentative_g_score = g_score[current] + 1
                     if tentative_g_score < g_score.get(neighbor, float('inf')):
                         came_from[neighbor] = current

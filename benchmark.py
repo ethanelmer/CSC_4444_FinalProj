@@ -34,10 +34,11 @@ def plot_results(csv_path, size):
     fig.savefig("per_iter_dashboard.png", dpi=150)
     print(f"Figure saved → per_iter_dashboard.png")
     plt.show()
+    
+    
 def measure_path_length(came_from, goal):
-
+    #Measure the length of the path from the start to the goal.
     length = 0
-
     current = goal
     while current in came_from:
         current = came_from[current]
@@ -45,7 +46,7 @@ def measure_path_length(came_from, goal):
     return length
 
 def run_benchmark(alg, agent, goal):
-
+    # Run the benchmark for the specified algorithm and agent.
     if alg == 'A*':
         gen = agent.a_star()
     elif alg == 'BFS':
@@ -54,6 +55,7 @@ def run_benchmark(alg, agent, goal):
     start_time = time.perf_counter()
     for visited, came_from in gen:
         pass
+    # The generator has finished, and we can now measure the performance.
     runtime_ms = (time.perf_counter() - start_time) * 1000
     nodes_visited = len(visited)
     path_length = measure_path_length(came_from, goal)
